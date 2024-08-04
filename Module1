@@ -1,0 +1,120 @@
+import java.util.*;
+class Task implements Comparable<Task> {
+    String name;
+    int estimatedTime;
+    int difficulty;
+    boolean isHighPriority;
+    int actualTimeTaken;
+
+    Task(String name, int estimatedTime, int difficulty, boolean isHighPriority) {
+        this.name = name;
+        this.estimatedTime = estimatedTime;
+        this.difficulty = difficulty;
+        this.isHighPriority = isHighPriority;
+        this.actualTimeTaken = -1; // -1 indicates not executed yet
+    }
+
+    @Override
+    public int compareTo(Task other) {
+        if (this.isHighPriority && !other.isHighPriority) return -1;
+        if (!this.isHighPriority && other.isHighPriority) return 1;
+        return Integer.compare(this.estimatedTime, other.estimatedTime);
+    }
+
+    public void adjustDifficulty(int actualTimeTaken) {
+        this.actualTimeTaken = actualTimeTaken;
+        if (actualTimeTaken > estimatedTime) difficulty++;
+        else if (actualTimeTaken < estimatedTime) difficulty--;
+        difficulty = Math.max(1, Math.min(3, difficulty)); // Keep within range 1-3
+    }
+
+    @Override
+    public String toString() {
+        return name + " (Estimated Time: " + estimatedTime + " mins, Actual Time: " + actualTimeTaken + " mins, Difficulty: " + difficulty + ")";
+    }
+}
+
+public class DynamicSJFScheduler {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        List<Task> tasks = new ArrayList<>();
+
+        // Task input loop
+        System.out.println("Enter tasks (type 'done' when finished):");
+        while (true) {
+            System.out.print("Task Name: ");
+            String name = scanner.nextLine().trim();
+            if (name.equalsIgnoreCase("done")) break;
+
+            int estimatedTime = getValidNumber(scanner, "Estimated Time (in minutes): ");
+            int difficulty = getValidNumber(scanner, "Difficulty (1 = easy, 2 = medium, 3 = hard): ", 1, 3);
+            boolean isHighPriority = getValidBoolean(scanner, "Is this a high priority task? (yes/no): ");
+
+            Task task = new Task(name, estimatedTime, difficulty, isHighPriority);
+            tasks.add(task);
+        }
+        // Sort tasks by priority and estimated time
+        Collections.sort(tasks);
+
+        // Task execution loop
+        System.out.println("\nScheduled Tasks:");
+        for (Task task : tasks) {
+            System.out.println(task);
+            int actualTimeTaken = simulateTaskExecution(task);
+            task.adjustDifficulty(actualTimeTaken);
+            System.out.println("Task completed in " + actualTimeTaken + " minutes.");
+        }
+
+        System.out.println("\nFinal Task List:");
+        for (Task task : tasks) {
+            System.out.println(task);
+        }
+
+        scanner.close();
+    }
+
+    private static int getValidNumber(Scanner scanner, String prompt) {
+        int number = 0;
+        while (true) {
+            try {
+                System.out.print(prompt);
+                number = Integer.parseInt(scanner.nextLine());
+                if (number > 0) break;
+                System.out.println("Please enter a positive number.");
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a valid number.");
+            }
+        }
+        return number;
+    }
+
+    private static int getValidNumber(Scanner scanner, String prompt, int min, int max) {
+        int number = 0;
+        while (true) {
+            try {
+                System.out.print(prompt);
+                number = Integer.parseInt(scanner.nextLine());
+                if (number >= min && number <= max) break;
+                System.out.println("Please enter a number between " + min + " and " + max + ".");
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a valid number.");
+            }
+        }
+        return number;
+    }
+
+    private static boolean getValidBoolean(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim().toLowerCase();
+            if (input.equals("yes")) return true;
+            if (input.equals("no")) return false;
+            System.out.println("Invalid input. Please enter 'yes' or 'no'.");
+        }
+    }
+
+    private static int simulateTaskExecution(Task task) {
+        Random rand = new Random();
+        return task.estimatedTime + rand.nextInt(21) - 10; // Simulate actual time with +/- 10 minutes variation
+    }
+}
